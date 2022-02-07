@@ -1,0 +1,327 @@
+package com.RestAssured;
+
+import java.io.File;
+import java.net.URL;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.http.client.methods.RequestBuilder;
+import org.json.simple.JSONObject;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import com.google.gson.JsonObject;
+
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
+import io.restassured.http.Cookie;
+import io.restassured.http.Header;
+import io.restassured.http.Headers;
+import io.restassured.http.Method;
+import io.restassured.matcher.ResponseAwareMatcher;
+import io.restassured.path.json.config.JsonPathConfig;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchema;
+
+
+//This import statement allows you to start from given() instead of RestAssured.given(); 
+import static io.restassured.RestAssured.*;
+//eg. given().get("URL");
+
+public class BaseRestAssured {
+
+
+	
+	@Test
+	public void GETPlain(){
+		
+		System.out.println("----- PLAIN GET EXAMPLE BaseURI, BasePath, GET ----- ");
+		//Setting Base URI
+		RestAssured.baseURI ="http://restapi.demoqa.com";     /*/utilities/weather/city*/
+		
+		//Setting Base Path
+		RestAssured.basePath = "/utilities/weather/city";
+		
+		//Requesting GET (2 ways)
+		//Response resp = RestAssured.given().request(Method.GET,"/Hyderabad");
+		Response resp = RestAssured.given().get("/Hyderabad");
+
+		System.out.println(resp.body().asString());
+		
+		
+		/*
+		 * resp.getStatusCode();
+		   resp.getStatusLine();
+		   resp.getTime();
+		   resp.getSessionId();
+		*/
+		
+		System.out.println(resp.body().jsonPath().getString("City"));
+	}
+	
+	
+	@Test
+	public void GETwithPathParam(){
+		System.out.println("----- GET WITH PATH PARAM -----");
+        RestAssured.baseURI = "http://dummy.restapiexample.com/api/v1/employee/";
+        RestAssured.basePath ="";
+        String id = "24947";
+        
+        //SENDING HEADERS
+        //1. Sending headers in Header Object
+        /*Header first = new Header("headerName1", "headerValue1");
+        Header second = new Header("headerName2", "headerValue2");
+        Headers headers = new Headers(first,second);*/
+        
+        //2. Sending headers in a Map
+        /*Map<String, Object> headers2 = new HashMap<String, Object>();
+        headers2.put("headerName", "Name1");
+        headers2.put("headerAge", 23);
+        headers2.put("X-PULSE-API-KEY", vixApiKey);
+        headers2.put("Content-Type", "application/json");
+        headers2.put("Authorization", "Bearer "+accessToken);*/
+        
+        //3. Sending headers as var arg name value pairs
+        //RestAssured.given().headers("age", 3, "name", "Shrinath" , "TrueORNot", true)
+        
+        Response resp = RestAssured.given()
+        							.pathParam("id", id)
+        							.when()
+        							.get("/{id}");
+        System.out.println("GETwithPathParam response :- \n " + resp.asString());
+        //Full URL http://dummy.restapiexample.com/api/v1/employee/24947
+	}	
+	
+
+	@Test
+	//URL
+	//https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=2b1fd2d7f77ccf1b7de9b441571b39b8
+	public void GETwithQueryPathParam(){
+		System.out.println("---- GET WITH QUERY AND PATH PARAM ----");
+		
+		RestAssured.baseURI = "https://samples.openweathermap.org/data";
+		RestAssured.basePath ="";
+		Response resp = RestAssured.given()
+						.pathParam("data", 2.5)
+						.queryParam("q", "London,UK")
+						.queryParam("appid", "2b1fd2d7f77ccf1b7de9b441571b39b8")
+						.get("/{data}/weather");
+		
+		//The second way of passing query parameters in rest assured is to append them to the url.
+		//.get("?page=4");
+
+		System.out.println(resp.body().asString());
+		
+		//If we do not set path parameters
+		//java.lang.IllegalArgumentException: 
+		//Invalid number of path parameters. Expected 1, was 0. Undefined path parameters are: data.
+		
+		
+		//ALTERNATE METHOD TO PASS PATH PARAMS in .get() method
+		/*
+		 
+		int userid = 2;
+		
+		Map<String,Object> pathparams = new HashMap<>();
+		pathparams.put("hotelName", "Hotelss Inn");
+		pathparams.put("roomNumber", 22);
+		
+		Response response = RestAssured.given()
+		          .baseUri("https://localhost")
+		          .basePath("api/users")
+		          .when()
+		        //passing single path params  
+		          .get("/{userid}",userid);
+		
+		//passing list of objects in path params
+		//.get("/book/{hotelName}/{roomNumber}", "Hotels R Us", 22);
+		
+		//passing Map in path params        
+		//.get("/book/{hotelName}/{roomNumber}", pathparams)
+	   
+	   */	
+		
+		//SAVING HEADER STRING IN STRINGBUILDER
+		/*
+		StringBuilder headerString = new StringBuilder();
+		headers.entrySet().forEach(e -> {
+			headerString.append("<br>" + e.getKey() + " = " + e.getValue());
+		});
+		*/
+	}
+	
+	//oauth1 required elements
+	/*ConsumerAPi key
+	API Secret key
+	Access TOken
+	Accesstoken secret*/
+	//oauth2.0 is for limited access to the users
+	//
+	
+	
+	public void GETwithJSONschemaVal(){
+		File f = new File("/text.txt");
+		Response resp = RestAssured.given()/*.auth().oauth2("String")*/.get("URL");
+		resp.then().assertThat().body(matchesJsonSchema(f));
+	}
+	
+	@Test
+	public void POSTWithJsonStringBody(){
+		
+		//Setting Cookies
+		//Cookie requestCookie = new Cookie.Builder("first_name", "John").setSecured(true).setComment("Example Comment").build();
+
+		RestAssured.baseURI ="http://restapi.demoqa.com/customer";
+		RestAssured.basePath ="";
+		
+		//The body recognizes and converts a map to JsonString
+		Map<String,String> formP = new HashMap<>();
+		formP.put("FirstName", "SuTen");
+		formP.put("LastName", "Ankinara");
+		formP.put("UserName", "s12313laneyer2dd2011");
+		formP.put("Password", "parnaka2344");
+		formP.put("Email", "notsample22344559@gmail.com");
+		
+		//Setting and getting body as JsonString using GSON library
+		JsonObject obj = new JsonObject();
+		obj.addProperty("FirstNAme", "adad");
+		obj.addProperty("FirstNAme2", "adad2");
+		obj.addProperty("FirstNAme3", "adad3");
+		obj.addProperty("FirstNAm4", "adad4");
+		obj.addProperty("FirstNAme5", "adad5");
+		System.out.println("AAAAA" + obj.toString());
+		
+		//SEtting and getting body as JsonString using JSON- Simple
+		JSONObject obj2 = new JSONObject();
+		obj2.put("FirstName", "Suten2");
+		obj2.put("LastName", "Ankinara2");
+		obj2.put("UserName", "s12313lane2yer2dd2011");
+		obj2.put("Password", "parnaka23434");
+		obj2.put("Email", "notsample223444559@gmail.com");
+		System.out.println("AAAAA" + obj2.toString());
+
+		
+		
+		//obj2.toJSONString() works
+		//formP works formP.toString() does not work
+		
+		Response resp = RestAssured.given().body(obj2.toJSONString()).post("/register");
+		//In some cases only formParams does not work and in some cases body with String jsonRequest works
+		//formParams work only for form Data
+		/*Response resp = RestAssured.given()
+				.formParam("FirstName", "sadasd")
+				.formParam("LastName", "Ankinara3")
+				.formParam("UserName", "s12313lane2yer2dd2011")
+				.formParam("Password", "parnaka23434")
+				.formParam("Email", "notsampoipowee23444559@gmail.com")
+				
+				formParams(formP).post("/register");*/
+		System.out.println("NNNNNNNNNNN"+ resp.asString());
+		//The param() method will act life formParam() for POST requests.	
+		
+		//System.out.println("NNNNNNNNNN \n"+ requestParams.toString());
+	}
+	
+	
+	@Test
+	public void POSTWithParam(){
+		RestAssured.baseURI ="https://www.example.com";
+		RestAssured.basePath ="";
+
+		Response resp = RestAssured.given().urlEncodingEnabled(true).param("username", "user@site.com")
+		 .param("password", "Pas54321")
+        .header("Accept", ContentType.JSON.getAcceptHeader())
+        .post("/login");
+		System.out.println("SSSSSSS \n"+ resp.asString());
+//IMP
+		//param() acts like a queryParam for get Requests
+		//param() acts like a formParam for POST Requests
+		
+		//given().formParams("username", "john","password","1234").post("/");
+		//given().params("username", "john","password","1234").post("/");
+	}
+	//Sending multipart form data
+	//            .contentType("multipart/form-data")
+
+	@Test
+	public void PUTExample(){
+		int empid = 15410;
+
+		RestAssured.baseURI ="http://dummy.restapiexample.com/api/v1";
+		//RequestSpecBuilder build = new RequestSpecBuilder();
+		
+		
+		RequestSpecification request = RestAssured.given();
+		
+		JSONObject requestParams = new JSONObject();
+		requestParams.put("name", "Zion"); // Cast
+		requestParams.put("age", 23);
+		requestParams.put("salary", 12000);
+
+		request.body(requestParams.toJSONString());
+		Response response = request.put("/update/"+ empid);
+
+		int statusCode = response.getStatusCode();
+		System.out.println(response.asString());
+		Assert.assertEquals(statusCode, 200); 
+		
+		Cookie ck = new Cookie.Builder("name", "value").setSecured(false).setExpiryDate(new Date(2019, 12, 12)).setPath("/path").setComment("describe purpose of this cookie").setMaxAge(20).setDomain("").build();
+		//setPath defines the path on the subset of url for which this cookie applies
+		//setSecured indicates if the cookie shoueld be sent through secured https or ssl
+		
+		//Bwrite.write((ck.getName()+";"+ck.getValue()+";"+ck.getDomain()+";"+ck.getPath()+";"+ck.getExpiry()+";"+ck.isSecure()));
+	}
+	
+	
+	/* ERROR CODES
+	 * OR HTTP STATUS CODES
+	
+	404 - indicates that the REST API can't map the client's URI to a resource but may be available in the future.
+	The current URI cannot be mapped to any of the URIs on clients server
+	200 - GET response if successful
+	201 - POST response if successful , 201 creates a resource at clients server 
+	401 - UNAUTHORIZED ERROR | Authentications missing | API key missing
+	request sent by the client could not be authenticated. 
+	403 - FORBIDDEN ERROR
+	403 client's request is formed correctly, 
+	but the REST API refuses to honor it, i.e. the user does not have the necessary permissions for the resource.
+	
+	https://benramsey.com/blog/2008/04/http-status-201-created-vs-202-accepted/
+	202 - is for POST request which is successfully accepted but the resource is in created pending state
+	in this case, The resource takes time to create
+	
+	
+	*/
+	
+	public static void setBaseURL(){
+		RestAssured.baseURI = "www.google.com";
+	}
+	
+	public static void setBasePath(){
+		RestAssured.basePath = "/users";
+	}
+	
+	public static void GET(){
+		RequestSpecBuilder specBuilder = new RequestSpecBuilder();
+		//specBuilder.addPathParams(parameterNameValuePairs)
+		//specBuilder.addQueryParams(parametersMap)
+		//specBuilder.addFormParams(parametersMap) 
+		//specBuilder.addFilters(filters)
+		
+		
+		RequestSpecification requestSpec = new RequestSpecBuilder().addParameter("parameter1", "value1").build();
+
+		
+		//USING HAMCREST MATCHERS
+		/* given().
+		         spec(requestSpec).
+		 expect().
+		         body("x.y.z", equalTo("something")).
+		 when().
+		        get("/something");*/
+		 
+	}
+}
