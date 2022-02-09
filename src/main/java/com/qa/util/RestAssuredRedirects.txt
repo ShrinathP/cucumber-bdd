@@ -1,0 +1,18 @@
+Handling redirects
+http://biercoff.com/why-rest-assured-doesnt-redirect-post-requests/
+
+We need to set redirects true or false in config
+
+RestAssured.config = config().redirect(redirectConfig().followRedirects(true).and().maxRedirects(0));
+//OR
+RequestSpecification spec = new RequestSpecBuilder().setConfig(RestAssured.config().redirect(redirectConfig().followRedirects(false))).build();
+
+
+given()
+  .contentType("application/x-www-form-urlencoded; charset=utf-8")
+  .when()
+    .redirects().follow(false)
+  .get("/foo")
+  .then()
+    .statusCode(302)
+    .header("Location", notNullValue());

@@ -1,0 +1,121 @@
+
+
+//https://www.youtube.com/watch?v=_NRgpI48ogQ
+//Upload file
+
+File file = new File("path of file/1/2.txt");
+
+Response response = RestAssured
+    .given()
+    .multiPart("file", file, "multipart/form-data") //sets header content type
+    .post("https://the-internet.herokuapp.com/upload")
+    .thenReturn();
+
+Response response = RestAssured
+    .given()
+    .multiPart("file", file) //sets header content type
+    .formParam("name", "param")
+    .post("https://the-internet.herokuapp.com/upload")
+    .thenReturn();
+
+
+// Download response as json file
+Response respose = RestAssured.
+    .given()
+    .log()
+    .all()
+    .when()
+    .get("https://reqres.in/api/users")
+    andReturn();
+
+byte[] bytes = response().getBody().asByteArray();
+File file = new File("/Users/shrinath/Downloads/users.json")
+Files.write(file.toPath(), bytes);
+
+//OR
+FileOutputStream fos = new FileOutputStream(new File("users.json"));
+fos.write(bytes);
+
+//OR extract().asByteArray()
+		byte[] dowloadedFile = RestAssured.given().when()
+								.get("https://chercher.tech/files/minion.zip")
+								.then().extract().asByteArray();
+
+			FileOutputStream os = new FileOutputStream(new File("./files/minios-from-rest-assured.zip"));
+			os.write(dowloadedFile);
+			os.close();
+
+//FormParam vs QueryParam
+FormParam HTML form accepts form urlencoded
+@FormParam: Accepts POST request and fetches data from HTML
+form or any request of the media type application/x-www-form-urlencoded.
+
+
+
+
+//Param vs FormParam vs QueryParam
+//using param is bad practice
+RESTassured request parameters can be either query parameters or form parameters.
+
+If you don't specify which, RESTassured
+will assume GET params are query params
+ and POST params are form params, e.g.
+
+
+
+
+Cookie Based Authentication
+Cookie requestCookie = new Cookie.Builder("first_name", "John").setSecured(true).setComment("Example Comment").build();
+ 		Response response = given()
+       .baseUri("http://localhost")
+       .basePath("api/users")
+ 			.cookie(requestCookie)
+ 			.get("/2");
+
+
+        Response resp = given()
+            .header("Content-Type", "application/json")
+            .body(json)
+            .post("v1/session")
+
+        System.out.println(resp.getCookies().get("JSESSIONID"));
+        String sessionid = resp.getCookies().get("JSESSIONID");
+
+        Response resp = given()
+                    .header("Content-Type", "application/json")
+                    .cookie("sessionID", sessionids)
+                    .body(json)
+                    .post("v1/session")
+
+//Other way using
+//getDetailedCookie
+
+private Cookie cookie;
+
+@BeforeClass
+public void exampleOfLogin() {
+    String body = String.format("//json");
+    cookies = RestAssured.given()
+            .contentType(ContentType.JSON)
+            .when()
+            .body(body)
+            .post("www.test_test.com")
+            .then()
+            .statusCode(200)
+            .extract()
+            .response()
+            .getDetailedCookies();
+}
+
+@Test
+public void performActionsBasedOnCookies() {
+//set cookies before making a post request and check the returned status code
+    RestAssured.given()
+            .cookies(cookies)
+            .contentType(ContentType.JSON)
+            .when()
+            .post("www.test_url.com")
+            .then()
+            .statusCode(200);
+}
+
